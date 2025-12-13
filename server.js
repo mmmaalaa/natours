@@ -7,7 +7,7 @@ mongoose
     console.log('DB connected sucessfully');
   })
   .catch((err) => {
-    console.log('failed to connectDB', err);
+    console.log('failed to connectDB', err.message);
   });
 
 const port = process.env.PORT || 5000;

@@ -4,8 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "npx nodemon --env-file=.env server.js",
-    "start": "node --env-file=.env server.js"
+    "dev": "cross-env NODE_ENV=development npx nodemon --env-file=.env server.js",
+    "start": "cross-env NODE_ENV=production node --env-file=.env server.js"
   },
   "keywords": [],
   "author": "",
@@ -16,5 +16,8 @@
     "mongoose": "^9.0.1",
     "morgan": "^1.10.1",
     "qs": "^6.14.0"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   }
 }

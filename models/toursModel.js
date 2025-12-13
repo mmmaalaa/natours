@@ -77,9 +77,20 @@ const tourSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+    },
+    toObject: {
+      virtuals: true,
+    },
   }
 );
-
+tourSchema.virtual('durationWeeks').get(function () {
+  return Math.ceil(this.duration / 7);
+});
+tourSchema.pre('save', function () {
+  this.slug = this.name.toLowerCase().replace(/ /g, '-');
+});
 const Tour = mongoose.model('Tour', tourSchema);
 
 export default Tour;
