@@ -27,6 +27,7 @@ const handleValidationErrorDB = (err) => {
   const message = `Invalid input data:{ ${error.join(', ')} }`;
   return new AppError(message, 400);
 };
+
 export const globalErrorHandler = (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
@@ -37,6 +38,7 @@ export const globalErrorHandler = (err, req, res, next) => {
     if (err.name === 'CastError') err = handleCastErrorDB(err);
     if (err.code === 11000) err = handleDuplicateFieldsDB(err);
     if (err.name === 'ValidationError') err = handleValidationErrorDB(err);
+    if (err.name === 'JsonWebTokenError') err = new AppError('Invalid token please login ', 401);
     return sendErrorProd(res, err);
   }
 };

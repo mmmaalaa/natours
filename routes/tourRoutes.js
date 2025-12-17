@@ -8,10 +8,16 @@ import {
   getTourStats,
   getMonthlyPlan,
 } from '../controllers/tourController.js';
+import { authentication } from '../middlewares/authenticationMiddleware.js';
+import { allowTo } from '../middlewares/autherizationMiddleware.js';
+import { userRoles } from '../models/userModel.js';
 
 const router = Router();
 
-router.route('/').get(getAllTours).post(createTour);
+router
+  .route('/')
+  .get(authentication, getAllTours)
+  .post(authentication, allowTo(userRoles.admin), createTour);
 
 router.route('/stats').get(getTourStats);
 router.route('/monthly-plan/:year').get(getMonthlyPlan);
