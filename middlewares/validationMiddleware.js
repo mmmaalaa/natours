@@ -21,6 +21,7 @@ export const validate = (schemas = {}) => {
       return res.status(400).json({
         status: 'fail',
         errors,
+        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
       });
     }
   };

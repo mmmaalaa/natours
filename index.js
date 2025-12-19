@@ -1,10 +1,12 @@
 import express from 'express';
 import morgan from 'morgan';
-
 import tourRouter from './routes/tourRoutes.js';
 import userRouter from './routes/userRoutes.js';
 import AppError from './utils/appError.js';
 import { globalErrorHandler } from './controllers/errorController.js';
+import cookieParser from 'cookie-parser';
+import { globalRateLimiter } from './utils/rateLimit.js';
+import helmet from 'helmet';
 
 const app = express();
 
@@ -12,9 +14,12 @@ const app = express();
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+app.use('/api', globalRateLimiter);
+app.use(helmet());
 
 app.use(express.json());
 app.use(express.static(`./public`));
+app.use(cookieParser());
 
 // 3) ROUTES
 app.use('/api/v1/tours', tourRouter);

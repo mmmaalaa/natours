@@ -78,9 +78,9 @@ userSchema.pre(/^find/, function () {
 userSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
-userSchema.methods.createJWT = function () {
+userSchema.methods.createJWT = function (expiresIn) {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn,
   });
 };
 userSchema.methods.createPasswordResetToken = function () {

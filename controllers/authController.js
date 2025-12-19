@@ -3,7 +3,24 @@ import AppError from '../utils/appError.js';
 import asyncHandler from '../utils/asyncHandler.js';
 import crypto from 'crypto';
 import emailEmitter from '../utils/sendEmailEvent.js';
+import jwt from 'jsonwebtoken';
 
+const sendToken = (user, res) => {
+  const accessToken = user.createJWT(process.env.JWT_ACCESS_EXPIRES_IN);
+  const refreshToken = user.createJWT(process.env.JWT_REFRESH_EXPIRES_IN);
+  res.cookie('accessToken', accessToken, {
+    expires: new Date(Date.now() + 15 * 60 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  res.cookie('refreshToken', refreshToken, {
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+};
 export const signUp = asyncHandler(async (req, res, next) => {
   const { name, email, password } = req.body;
   const isUserExists = await User.findOne({ email });
@@ -15,10 +32,9 @@ export const signUp = asyncHandler(async (req, res, next) => {
     email,
     password,
   });
-  const token = user.createJWT();
+  sendToken(user, res);
   res.status(201).json({
     status: 'success',
-    token,
     data: {
       name: user.name,
       email: user.email,
@@ -33,12 +49,12 @@ export const login = asyncHandler(async (req, res, next) => {
     return next(new AppError('invalid email or password', 401));
   }
 
-  const token = user.createJWT();
+  sendToken(user, res);
   res.status(200).json({
     status: 'success',
-    message: 'User logged in successfully',
     data: {
-      token,
+      name: user.name,
+      email: user.email,
     },
   });
 });
@@ -86,14 +102,11 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
   user.password = newPassword;
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
-  await user.save({ validateBeforeSave: false });
-  const token = user.createJWT();
+  await user.save();
+  sendToken(user, res);
   res.status(200).json({
     status: 'success',
     message: 'Password reset successfully',
-    data: {
-      token,
-    },
   });
 });
 
@@ -108,14 +121,23 @@ export const updatePassword = asyncHandler(async (req, res, next) => {
   }
   user.password = newPassword;
   await user.save();
-  const token = user.createJWT();
+  sendToken(user, res);
   res.status(200).json({
     status: 'success',
-    message: 'Password updated successfully',
-    data: {
-      token,
-    },
+    message: `password updated sucessfully`,
   });
 });
 
-
+export const refresh = asyncHandler(async (req, res, next) => {
+  const { refreshToken } = req.cookies;
+  if (!refreshToken) {
+    return next(new AppError('No refresh token found, please login', 401));
+  }
+  const { id } = jwt.verify(refreshToken, process.env.JWT_SECRET);
+  const user = await User.findById(id);
+  if (!user) {
+    return next(new AppError('user not found', 404));
+  }
+  sendToken(user, res);
+  return res.status(200).json({ status: 'success' });
+});

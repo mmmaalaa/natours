@@ -20,16 +20,18 @@ import {
 import {
   forgetPassword,
   login,
+  refresh,
   resetPassword,
   signUp,
   updatePassword,
 } from '../controllers/authController.js';
 import { authentication } from '../middlewares/authenticationMiddleware.js';
+import { authRateLimiter } from '../utils/rateLimit.js';
 
 const router = Router();
 
 router.post('/signUp', validate({ body: createUserSchema }), signUp);
-router.post('/login', validate({ body: loginSchema }), login);
+router.post('/login', authRateLimiter, validate({ body: loginSchema }), login);
 router.post(
   '/forget-password',
   validate({ body: forgetPassSchema }),
@@ -52,6 +54,7 @@ router.patch(
   validate({ body: updateUserSchema }),
   updateMe
 );
+router.get('/refresh', authentication, refresh);
 router.delete('/delete-user', authentication, deleteMe);
 router
   .route('/')
