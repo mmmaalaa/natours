@@ -75,6 +75,29 @@ const tourSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    startLocation: {
+      type: {
+        type: String,
+        default: 'Point',
+        enum: ['Point'],
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+    },
+    locations: [
+      {
+        type: {
+          type: String,
+          default: 'Point',
+          enum: ['Point'],
+        },
+        coordinates: [Number],
+        address: String,
+        description: String,
+      },
+    ],
+    guides: [{ type: mongoose.Schema.ObjectId, ref: 'User' }],
   },
   {
     timestamps: true,
@@ -86,12 +109,28 @@ const tourSchema = new mongoose.Schema(
     },
   }
 );
+
 tourSchema.virtual('durationWeeks').get(function () {
   return Math.ceil(this.duration / 7);
+});
+
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id',
+  foreignField: 'tour',
 });
 tourSchema.pre('save', function () {
   this.slug = this.name.toLowerCase().replace(/ /g, '-');
 });
+tourSchema.pre(/^find/, function () {
+  this.populate({
+    path: 'guides',
+    select: '-__v -password',
+  });
+});
+tourSchema.index({ price: 1, ratingsAverage: -1 });
+tourSchema.index({ slug: 1 });
+tourSchema.index({ startLocation: '2dsphere' });
 const Tour = mongoose.model('Tour', tourSchema);
 
 export default Tour;
